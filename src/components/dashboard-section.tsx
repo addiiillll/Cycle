@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FolderOpen, BarChart3, Zap, VideoIcon, Sparkles } from "lucide-react"
 import { Button } from "./ui/button"
+import Image from "next/image"
 
 interface DashboardSectionProps {
   isVisible?: boolean
@@ -94,10 +95,10 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
     }
   ]
   return (
-    <div className="flex flex-col items-center justify-center h-screen mb-12">
-      <section className="min-h-screen flex max-w-7xl mx-auto p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen mb-12 px-4 sm:px-6 lg:px-8">
+      <section className="flex flex-col lg:flex-row max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 gap-6 lg:gap-8">
         {/* Left Panel - Clean Grid Layout */}
-        <div className="w-1/2 flex flex-col items-center justify-center relative p-4 border border-dashed border-blue-300/60 rounded-xl">
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center relative p-4 sm:p-6 border border-dashed border-blue-300/60 rounded-xl">
           {/* Interactive Content Display */}
           <motion.div
             initial={{
@@ -124,9 +125,9 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
               stiffness: 100,
               damping: 15
             }}
-            className="mb-12"
+            className="mb-8 sm:mb-12"
           >
-            <div className="w-80 h-48 bg-gray-800 rounded-lg overflow-hidden shadow-lg relative">
+            <div className="w-full max-w-xs sm:max-w-sm md:w-80 h-36 sm:h-40 md:h-48 bg-gray-800 rounded-lg overflow-hidden shadow-lg relative mx-auto">
               <motion.img
                 key={selectedElement} // Re-animate when selection changes
                 initial={{ opacity: 0, scale: 1.1 }}
@@ -140,34 +141,34 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
             </div>
           </motion.div>
 
-          {/* Icons Grid - 4x3 Layout */}
-          <div className="grid grid-cols-4 gap-6 mb-12">
+          {/* Icons Grid - Responsive Layout */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8 sm:mb-12 max-w-xs sm:max-w-sm md:max-w-md mx-auto">
             {[
-              { icon: <VideoIcon className="w-5 h-5" />, color: "bg-blue-500", delay: 1.2 },
-              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-red-500", delay: 1.3 },
+              { icon: <Image src={"https://cdn.prod.website-files.com/62b5b85dd560583e288cb389/65ee24d0e6e8f19d66230c49_bulle-video-min.svg"} height={32} width={32} alt="Video" className="w-96 h-96" />, color: "", delay: 1.2 },
+              { icon: <BarChart3 className="w-6 h-6" />, color: "bg-red-500", delay: 1.3 },
               {
                 icon: (
-                  <div className="w-5 h-5 bg-black rounded text-white flex items-center justify-center text-xs font-bold">
+                  <div className="w-6 h-6 bg-black rounded text-white flex items-center justify-center text-sm font-bold">
                     N
                   </div>
                 ),
                 color: "bg-gray-800",
                 delay: 1.4,
               },
-              { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.5 },
+              { icon: <Zap className="w-6 h-6" />, color: "bg-purple-500", delay: 1.5 },
 
-              { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.6 },
-              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-orange-500", delay: 1.7 },
-              { icon: <Zap className="w-5 h-5" />, color: "bg-blue-400", delay: 1.8 },
-              { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 1.9 },
+              { icon: <Zap className="w-6 h-6" />, color: "bg-purple-500", delay: 1.6 },
+              { icon: <BarChart3 className="w-6 h-6" />, color: "bg-orange-500", delay: 1.7 },
+              { icon: <Zap className="w-6 h-6" />, color: "bg-blue-400", delay: 1.8 },
+              { icon: <FolderOpen className="w-6 h-6" />, color: "bg-blue-500", delay: 1.9 },
 
               {
-                icon: <div className="text-xs font-bold text-white">G</div>,
+                icon: <div className="text-sm font-bold text-white">G</div>,
                 color: "bg-green-500",
                 delay: 2.0,
               },
-              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-blue-400", delay: 2.1 },
-              { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 2.2 },
+              { icon: <BarChart3 className="w-6 h-6" />, color: "bg-blue-400", delay: 2.1 },
+              { icon: <FolderOpen className="w-6 h-6" />, color: "bg-blue-500", delay: 2.2 },
               {
                 icon: <div className="text-xs font-bold text-white">tally</div>,
                 color: "bg-gray-600",
@@ -205,7 +206,7 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
                   whileHover={{ scale: selectedElement === i ? 1.15 : 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedElement(i)}
-                  className={`w-12 h-12 rounded-full cursor-pointer transition-all duration-200 relative group ${selectedElement === i
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full cursor-pointer transition-all duration-200 relative group ${selectedElement === i
                     ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-50'
                     : 'hover:shadow-xl'
                     }`}
@@ -224,10 +225,7 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
                   <div className="relative z-10 text-white flex items-center justify-center w-full h-full">
                     {item.icon}
                   </div>
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
-                    Demo
-                  </div>
+                  
                 </motion.div>
               )
             })}
@@ -276,7 +274,7 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
 
               {/* Main Glass Ball */}
               <div
-                className="relative w-16 h-16 mx-auto rounded-full overflow-hidden"
+                className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full overflow-hidden"
                 style={{
                   background: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(10px)',
@@ -435,12 +433,12 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
         </div>
 
         {/* Right Panel - Charts */}
-        <div className="w-2/1 p-8 grid grid-cols-2 gap-6">
+        <div className="w-full lg:w-2/3 p-4 sm:p-6 lg:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Top feature requests */}
-          <div className="bg-white rounded-2xl p-6 relative group">
-            <div className="flex items-center gap-2 mb-6">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Top feature requests</h3>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 relative group">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Top feature requests</h3>
             </div>
             {/* Tooltip */}
             <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
@@ -449,34 +447,34 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
 
             <div className="space-y-4">
               {/* Feature request items with skeleton and bars */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "60%" }}></div>
-                <div className="w-16 h-3 bg-gray-100 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 sm:w-12 h-2 sm:h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-4 sm:h-6 rounded-full" style={{ width: "60%" }}></div>
+                <div className="w-12 sm:w-16 h-2 sm:h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "45%" }}></div>
-                <div className="w-20 h-3 bg-gray-100 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-12 sm:w-16 h-2 sm:h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-4 sm:h-6 rounded-full" style={{ width: "45%" }}></div>
+                <div className="w-16 sm:w-20 h-2 sm:h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "70%" }}></div>
-                <div className="w-12 h-3 bg-gray-100 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 sm:w-14 h-2 sm:h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-4 sm:h-6 rounded-full" style={{ width: "70%" }}></div>
+                <div className="w-8 sm:w-12 h-2 sm:h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "80%" }}></div>
-                <div className="w-18 h-3 bg-gray-100 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 sm:w-10 h-2 sm:h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-4 sm:h-6 rounded-full" style={{ width: "80%" }}></div>
+                <div className="w-14 sm:w-18 h-2 sm:h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "35%" }}></div>
-                <div className="w-14 h-3 bg-gray-100 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-12 sm:w-16 h-2 sm:h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-4 sm:h-6 rounded-full" style={{ width: "35%" }}></div>
+                <div className="w-10 sm:w-14 h-2 sm:h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -624,9 +622,11 @@ export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
 
 
       </section>
-      <Button>
-        Book Demo
-      </Button>
+      <div className="">
+        <Button>
+          Book Demo
+        </Button>
+      </div>
     </div>
   )
 }

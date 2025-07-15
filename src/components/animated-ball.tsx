@@ -184,7 +184,7 @@ const AnimatedGlassBall = ({ isLoading = false }: AnimatedGlassBallProps) => {
         <div>
           {isLoading ? (
             <div className="space-y-2">
-              <div className="text-lg font-medium text-gray-700">Processing feedback...</div>
+              <div className="text-lg font-medium text-gray-700">Processing...</div>
               {/* Simple progress bar */}
               <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 overflow-hidden">
                 <motion.div
