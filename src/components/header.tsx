@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react"
 export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-6 md:px-20 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
             <div className="w-4 h-4 bg-white rounded-full"></div>
