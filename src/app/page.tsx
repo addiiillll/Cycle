@@ -87,7 +87,7 @@ export default function CycleApp() {
       }`}>
         {/* Second Section - Always in DOM but hidden until animation completes */}
         <div ref={sectionTwoRef} className="relative bg-white">
-          <DashboardSection />
+          <DashboardSection isVisible={showSectionTwo} />
         </div>
 
         {/* Third Section - Always in DOM but hidden until animation completes */}

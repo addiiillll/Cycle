@@ -9,7 +9,7 @@ export function SingleTestimonial() {
         {/* Profile Image */}
         <div className="flex-shrink-0">
           <Image
-            src="/olivier-godement.jpg"
+            src="https://cdn.prod.website-files.com/62b5b85dd560583e288cb389/65efdb0da3246cf09f570a9e_image%20726.jpg"
             alt="Olivier Godement"
             width={200}
             height={200}

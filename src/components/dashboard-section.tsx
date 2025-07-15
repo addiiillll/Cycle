@@ -3,9 +3,14 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FolderOpen, BarChart3, Zap } from "lucide-react"
+import { FolderOpen, BarChart3, Zap, VideoIcon, Sparkles } from "lucide-react"
+import { Button } from "./ui/button"
 
-export function DashboardSection() {
+interface DashboardSectionProps {
+  isVisible?: boolean
+}
+
+export function DashboardSection({ isVisible = false }: DashboardSectionProps) {
   // Calculate the center position where the ball would be (roughly center of left panel)
   const centerX = 0 // Relative to the element's container
   const centerY = 0 // Relative to the element's container
@@ -18,25 +23,25 @@ export function DashboardSection() {
     {
       title: "File Management System",
       description: "Organize and manage your project files efficiently",
-      image: "/placeholder.svg?height=192&width=320&text=File+Management",
+      image: "/video-call.jpg",
       color: "blue"
     },
     {
       title: "Analytics Dashboard",
       description: "Track performance metrics and user engagement",
-      image: "/placeholder.svg?height=192&width=320&text=Analytics",
+      image: "/pdf-doc.svg",
       color: "red"
     },
     {
       title: "Notion Integration",
       description: "Seamlessly connect with your Notion workspace",
-      image: "/placeholder.svg?height=192&width=320&text=Notion",
+      image: "/feedback.svg",
       color: "gray"
     },
     {
       title: "Quick Actions Hub",
       description: "Access frequently used tools and shortcuts",
-      image: "/placeholder.svg?height=192&width=320&text=Quick+Actions",
+      image: "/interview.svg",
       color: "purple"
     },
     {
@@ -89,406 +94,539 @@ export function DashboardSection() {
     }
   ]
   return (
-    <section className="min-h-screen bg-gray-50 flex">
-      {/* Left Panel - Clean Grid Layout */}
-      <div className="w-1/2 flex flex-col items-center justify-center relative p-12">
-        {/* Interactive Content Display */}
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: centerX,
-            y: centerY + 200, // Start from center, move up to final position
-            scale: 0.3
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            y: 0,
-            scale: 1
-          }}
-          transition={{
-            delay: 0.5,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-          className="mb-12"
-        >
-          <div className="w-80 h-48 bg-gray-800 rounded-lg overflow-hidden shadow-lg relative">
-            <motion.img
-              key={selectedElement} // Re-animate when selection changes
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              src={contentData[selectedElement].image}
-              alt={contentData[selectedElement].title}
-              className="w-full h-full object-cover"
-            />
-            {/* Content overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <motion.h3
-                key={`title-${selectedElement}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className="text-white font-semibold text-sm mb-1"
-              >
-                {contentData[selectedElement].title}
-              </motion.h3>
-              <motion.p
-                key={`desc-${selectedElement}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="text-white/80 text-xs"
-              >
-                {contentData[selectedElement].description}
-              </motion.p>
+    <div className="flex flex-col items-center justify-center h-screen mb-12">
+      <section className="min-h-screen flex max-w-7xl mx-auto p-8">
+        {/* Left Panel - Clean Grid Layout */}
+        <div className="w-1/2 flex flex-col items-center justify-center relative p-4 border border-dashed border-blue-300/60 rounded-xl">
+          {/* Interactive Content Display */}
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: centerX,
+              y: centerY + 100, // Start from center (ball position), move up to final position
+              scale: 0.2
+            }}
+            animate={isVisible ? {
+              opacity: 1,
+              x: 0,
+              y: 0,
+              scale: 1
+            } : {
+              opacity: 0,
+              x: centerX,
+              y: centerY + 100,
+              scale: 0.2
+            }}
+            transition={{
+              delay: isVisible ? 0.8 : 0,
+              duration: 0.8,
+              type: "spring",
+              stiffness: 100,
+              damping: 15
+            }}
+            className="mb-12"
+          >
+            <div className="w-80 h-48 bg-gray-800 rounded-lg overflow-hidden shadow-lg relative">
+              <motion.img
+                key={selectedElement} // Re-animate when selection changes
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                src={contentData[selectedElement].image}
+                alt={contentData[selectedElement].title}
+                className="w-full h-full object-cover"
+              />
+
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Icons Grid - 4x3 Layout */}
-        <div className="grid grid-cols-4 gap-6 mb-12">
-          {[
-            { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 1.2 },
-            { icon: <BarChart3 className="w-5 h-5" />, color: "bg-red-500", delay: 1.3 },
-            {
-              icon: (
-                <div className="w-5 h-5 bg-black rounded text-white flex items-center justify-center text-xs font-bold">
-                  N
-                </div>
-              ),
-              color: "bg-gray-800",
-              delay: 1.4,
-            },
-            { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.5 },
+          {/* Icons Grid - 4x3 Layout */}
+          <div className="grid grid-cols-4 gap-6 mb-12">
+            {[
+              { icon: <VideoIcon className="w-5 h-5" />, color: "bg-blue-500", delay: 1.2 },
+              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-red-500", delay: 1.3 },
+              {
+                icon: (
+                  <div className="w-5 h-5 bg-black rounded text-white flex items-center justify-center text-xs font-bold">
+                    N
+                  </div>
+                ),
+                color: "bg-gray-800",
+                delay: 1.4,
+              },
+              { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.5 },
 
-            { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.6 },
-            { icon: <BarChart3 className="w-5 h-5" />, color: "bg-orange-500", delay: 1.7 },
-            { icon: <Zap className="w-5 h-5" />, color: "bg-blue-400", delay: 1.8 },
-            { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 1.9 },
+              { icon: <Zap className="w-5 h-5" />, color: "bg-purple-500", delay: 1.6 },
+              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-orange-500", delay: 1.7 },
+              { icon: <Zap className="w-5 h-5" />, color: "bg-blue-400", delay: 1.8 },
+              { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 1.9 },
 
-            {
-              icon: <div className="text-xs font-bold text-white">G</div>,
-              color: "bg-green-500",
-              delay: 2.0,
-            },
-            { icon: <BarChart3 className="w-5 h-5" />, color: "bg-blue-400", delay: 2.1 },
-            { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 2.2 },
-            {
-              icon: <div className="text-xs font-bold text-white">tally</div>,
-              color: "bg-gray-600",
-              delay: 2.3,
-            },
-          ].map((item, i) => {
-            // Calculate position in 4x3 grid
-            const row = Math.floor(i / 4)
-            const col = i % 4
+              {
+                icon: <div className="text-xs font-bold text-white">G</div>,
+                color: "bg-green-500",
+                delay: 2.0,
+              },
+              { icon: <BarChart3 className="w-5 h-5" />, color: "bg-blue-400", delay: 2.1 },
+              { icon: <FolderOpen className="w-5 h-5" />, color: "bg-blue-500", delay: 2.2 },
+              {
+                icon: <div className="text-xs font-bold text-white">tally</div>,
+                color: "bg-gray-600",
+                delay: 2.3,
+              },
+            ].map((item, i) => {
 
-            // Calculate offset from center for throwing effect
-            const offsetX = (col - 1.5) * -60 // Negative to throw outward from center
-            const offsetY = (row - 1) * -60   // Negative to throw outward from center
-
-            return (
-              <motion.div
-                key={i}
-                initial={{
-                  scale: 0,
-                  opacity: 0,
-                  x: centerX + offsetX * 0.3, // Start closer to center
-                  y: centerY + offsetY * 0.3
-                }}
-                animate={{
-                  scale: selectedElement === i ? 1.1 : 1,
-                  opacity: 1,
-                  x: 0, // Final position
-                  y: 0
-                }}
-                transition={{
-                  duration: 0.6,
-                  delay: item.delay,
-                  type: "spring",
-                  stiffness: 150,
-                  damping: 15,
-                }}
-                whileHover={{ scale: selectedElement === i ? 1.15 : 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedElement(i)}
-                className={`w-12 h-12 ${item.color} rounded-xl shadow-lg flex items-center justify-center text-white cursor-pointer transition-all duration-200 ${
-                  selectedElement === i
+              return (
+                <motion.div
+                  key={i}
+                  initial={{
+                    scale: 0.2,
+                    opacity: 0,
+                    x: centerX, // Start from center (ball position)
+                    y: centerY + 100 // Start from center (ball position)
+                  }}
+                  animate={isVisible ? {
+                    scale: selectedElement === i ? 1.1 : 1,
+                    opacity: 1,
+                    x: 0, // Final position
+                    y: 0
+                  } : {
+                    scale: 0.2,
+                    opacity: 0,
+                    x: centerX,
+                    y: centerY + 100
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    delay: isVisible ? item.delay : 0,
+                    type: "spring",
+                    stiffness: 150,
+                    damping: 15,
+                  }}
+                  whileHover={{ scale: selectedElement === i ? 1.15 : 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedElement(i)}
+                  className={`w-12 h-12 rounded-full cursor-pointer transition-all duration-200 relative group ${selectedElement === i
                     ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-50'
                     : 'hover:shadow-xl'
-                }`}
+                    }`}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  {/* Colored background layer */}
+                  <div
+                    className={`absolute inset-0 ${item.color} rounded-full opacity-80`}
+                  />
+                  {/* Icon content */}
+                  <div className="relative z-10 text-white flex items-center justify-center w-full h-full">
+                    {item.icon}
+                  </div>
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
+                    Demo
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+
+          {/* Central Animated Glass Ball - Interactive Reset */}
+          <motion.div
+            initial={{
+              scale: 0.2,
+              opacity: 0,
+              x: centerX,
+              y: centerY
+            }}
+            animate={isVisible ? {
+              scale: 1,
+              opacity: 1,
+              x: 0,
+              y: 0
+            } : {
+              scale: 0.2,
+              opacity: 0,
+              x: centerX,
+              y: centerY
+            }}
+            transition={{
+              delay: isVisible ? 0.2 : 0,
+              duration: 0.8,
+              type: "spring",
+              stiffness: 120,
+              damping: 15
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedElement(0)}
+            className="relative cursor-pointer"
+          >
+            {/* Just the animated glass ball without text */}
+            <div className="relative">
+              {/* Outer subtle glow */}
+              <div
+                className="absolute inset-0 rounded-full blur-xl opacity-20 w-24 h-24 mx-auto"
+                style={{
+                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.3))'
+                }}
+              />
+
+              {/* Main Glass Ball */}
+              <div
+                className="relative w-16 h-16 mx-auto rounded-full overflow-hidden"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                }}
               >
-                {item.icon}
-              </motion.div>
-            )
-          })}
+                {/* Animated liquid/plasma inside */}
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 40%, #8B5CF6, #3B82F6, #06B6D4)',
+                    filter: 'blur(8px)',
+                    opacity: 0.8
+                  }}
+                  animate={{
+                    background: [
+                      'radial-gradient(circle at 30% 40%, #8B5CF6, #3B82F6, #06B6D4)',
+                      'radial-gradient(circle at 70% 30%, #3B82F6, #06B6D4, #8B5CF6)',
+                      'radial-gradient(circle at 50% 70%, #06B6D4, #8B5CF6, #3B82F6)',
+                      'radial-gradient(circle at 30% 40%, #8B5CF6, #3B82F6, #06B6D4)'
+                    ]
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+
+                {/* Secondary flowing color layer */}
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'linear-gradient(45deg, rgba(139, 92, 246, 0.6), rgba(59, 130, 246, 0.6), rgba(6, 182, 212, 0.6))',
+                    filter: 'blur(4px)',
+                    opacity: 0.7
+                  }}
+                  animate={{
+                    rotate: [0, 360],
+                    scale: [1, 1.1, 0.9, 1]
+                  }}
+                  transition={{
+                    rotate: {
+                      duration: 8,
+                      repeat: Infinity,
+                      ease: "linear"
+                    },
+                    scale: {
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }
+                  }}
+                />
+
+                {/* Flowing blobs */}
+                <motion.div
+                  className="absolute w-6 h-6 rounded-full opacity-60"
+                  style={{
+                    background: 'radial-gradient(circle, #8B5CF6, #3B82F6)',
+                    filter: 'blur(2px)',
+                    top: '20%',
+                    left: '20%'
+                  }}
+                  animate={{
+                    x: [0, 20, 10, 0],
+                    y: [0, 10, 20, 0],
+                    scale: [1, 0.8, 1.2, 1]
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+
+                <motion.div
+                  className="absolute w-4 h-4 rounded-full opacity-50"
+                  style={{
+                    background: 'radial-gradient(circle, #06B6D4, #8B5CF6)',
+                    filter: 'blur(3px)',
+                    top: '60%',
+                    right: '20%'
+                  }}
+                  animate={{
+                    x: [0, -15, -5, 0],
+                    y: [0, -12, -18, 0],
+                    scale: [1, 1.3, 0.7, 1]
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 1
+                  }}
+                />
+
+                <motion.div
+                  className="absolute w-3 h-3 rounded-full opacity-40"
+                  style={{
+                    background: 'radial-gradient(circle, #3B82F6, #06B6D4)',
+                    filter: 'blur(2px)',
+                    top: '40%',
+                    left: '60%'
+                  }}
+                  animate={{
+                    x: [0, -10, 8, 0],
+                    y: [0, 15, -5, 0],
+                    scale: [1, 0.6, 1.4, 1]
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 2
+                  }}
+                />
+
+                {/* Static glass highlights */}
+                <div
+                  className="absolute w-4 h-4 bg-white rounded-full opacity-40 blur-sm"
+                  style={{
+                    top: '20%',
+                    left: '25%'
+                  }}
+                />
+
+                <div
+                  className="absolute w-2 h-2 bg-white rounded-full opacity-30 blur-sm"
+                  style={{
+                    top: '40%',
+                    right: '30%'
+                  }}
+                />
+
+                {/* Glass rim reflection */}
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%)'
+                  }}
+                />
+              </div>
+
+              {/* Static reflection shadow */}
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 h-3 bg-gray-300 rounded-full blur-sm opacity-15"
+              />
+            </div>
+            {/* Tooltip */}
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Reset to default
+            </div>
+          </motion.div>
         </div>
 
-        {/* Central Orb - Interactive Reset */}
-        <motion.div
-          initial={{
-            scale: 0.2,
-            opacity: 0,
-            x: centerX,
-            y: centerY
-          }}
-          animate={{
-            scale: 1,
-            opacity: 1,
-            x: 0,
-            y: 0
-          }}
-          transition={{
-            delay: 1,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 120,
-            damping: 15
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setSelectedElement(0)}
-          className="relative cursor-pointer"
-        >
-          <div
-            className="w-24 h-24 rounded-full shadow-2xl transition-all duration-200 hover:shadow-3xl"
-            style={{
-              background: "linear-gradient(135deg, #60a5fa 0%, #a855f7 50%, #3b82f6 100%)",
-            }}
-          />
-          {/* Tooltip */}
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            Reset to default
-          </div>
-        </motion.div>
-      </div>
+        {/* Right Panel - Charts */}
+        <div className="w-2/1 p-8 grid grid-cols-2 gap-6">
+          {/* Top feature requests */}
+          <div className="bg-white rounded-2xl p-6 relative group">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Top feature requests</h3>
+            </div>
+            {/* Tooltip */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
+              Demo
+            </div>
 
-      {/* Right Panel - Charts */}
-      <div className="w-1/2 p-12 grid grid-cols-2 gap-8">
-        {/* Top Feature Requests */}
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: centerX - 200, // Start from center-left, move right to final position
-            y: centerY - 100,
-            scale: 0.5
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            y: 0,
-            scale: 1
-          }}
-          transition={{
-            delay: 1,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-        >
-          <Card className={`h-full transition-all duration-300 ${
-            selectedElement === 1 ? 'ring-2 ring-red-200 bg-red-50/50' : ''
-          }`}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-blue-500" />
-                Top feature requests
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[100, 85, 95, 75, 45].map((width, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${width}%` }}
-                    transition={{ duration: 1, delay: 1.5 + i * 0.1 }}
-                    className="h-4 bg-blue-400 rounded-full"
-                  />
-                ))}
+            <div className="space-y-4">
+              {/* Feature request items with skeleton and bars */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "60%" }}></div>
+                <div className="w-16 h-3 bg-gray-100 rounded animate-pulse"></div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
-        {/* Feedback Status */}
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: centerX - 150, // Start from center, move right-up to final position
-            y: centerY - 100,
-            scale: 0.5
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            y: 0,
-            scale: 1
-          }}
-          transition={{
-            delay: 1.2,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-        >
-          <Card className={`h-full transition-all duration-300 ${
-            [2, 3, 4].includes(selectedElement) ? 'ring-2 ring-purple-200 bg-purple-50/50' : ''
-          }`}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-blue-500" />
-                Feedback status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <div className="relative w-28 h-28">
-                <svg className="w-28 h-28 transform -rotate-90">
-                  <circle cx="56" cy="56" r="45" stroke="#e5e7eb" strokeWidth="10" fill="none" />
-                  <motion.circle
-                    cx="56"
-                    cy="56"
-                    r="45"
-                    stroke="#60a5fa"
-                    strokeWidth="10"
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "45%" }}></div>
+                <div className="w-20 h-3 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "70%" }}></div>
+                <div className="w-12 h-3 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "80%" }}></div>
+                <div className="w-18 h-3 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div className="flex-1 bg-blue-400 h-6 rounded-full" style={{ width: "35%" }}></div>
+                <div className="w-14 h-3 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback status */}
+          <div className="bg-white rounded-2xl p-6 relative group">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Feedback status</h3>
+            </div>
+            {/* Tooltip */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
+              Demo
+            </div>
+
+            <div className="flex items-center justify-center">
+              <div className="relative">
+                {/* Donut Chart */}
+                <svg width="200" height="200" className="transform -rotate-90">
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f3f4f6" strokeWidth="20" />
+                  {/* Pink segment */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 45}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * 0.4 }}
-                    transition={{ duration: 1.5, delay: 1.8 }}
-                    strokeLinecap="round"
-                  />
-                  <motion.circle
-                    cx="56"
-                    cy="56"
-                    r="45"
                     stroke="#f472b6"
-                    strokeWidth="10"
-                    fill="none"
-                    strokeDasharray={`${2 * Math.PI * 45 * 0.3} ${2 * Math.PI * 45}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * 0.1 }}
-                    transition={{ duration: 1.5, delay: 2 }}
+                    strokeWidth="20"
+                    strokeDasharray="125.6 376.8"
+                    strokeDashoffset="0"
                     strokeLinecap="round"
                   />
-                  <motion.circle
-                    cx="56"
-                    cy="56"
-                    r="45"
-                    stroke="#34d399"
-                    strokeWidth="10"
+                  {/* Blue segment */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 45 * 0.1} ${2 * Math.PI * 45}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * 0.0 }}
-                    transition={{ duration: 1.5, delay: 2.2 }}
+                    stroke="#60a5fa"
+                    strokeWidth="20"
+                    strokeDasharray="94.2 408.2"
+                    strokeDashoffset="-125.6"
+                    strokeLinecap="round"
+                  />
+                  {/* Green segment */}
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#4ade80"
+                    strokeWidth="20"
+                    strokeDasharray="157 345.4"
+                    strokeDashoffset="-219.8"
                     strokeLinecap="round"
                   />
                 </svg>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
-        {/* Customers with Most Feedback */}
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: centerX - 200, // Start from center, move right-down to final position
-            y: centerY + 50,
-            scale: 0.5
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            y: 0,
-            scale: 1
-          }}
-          transition={{
-            delay: 1.4,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-        >
-          <Card className={`h-full transition-all duration-300 ${
-            [5, 6, 9].includes(selectedElement) ? 'ring-2 ring-orange-200 bg-orange-50/50' : ''
-          }`}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-blue-500" />
-                Customers with most feedback
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-end justify-between h-24 gap-1">
-                {[60, 40, 85, 30, 55, 75, 95, 35].map((height, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ height: 0 }}
-                    animate={{ height: `${height}%` }}
-                    transition={{ duration: 0.8, delay: 2.5 + i * 0.1 }}
-                    className="bg-pink-300 rounded-t flex-1"
-                  />
-                ))}
+              {/* Legend dots */}
+              <div className="ml-8 space-y-3">
+                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-pink-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+          </div>
 
-        {/* Summary of Customer Quotes */}
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: centerX - 150, // Start from center, move right-down to final position
-            y: centerY + 50,
-            scale: 0.5
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            y: 0,
-            scale: 1
-          }}
-          transition={{
-            delay: 1.6,
-            duration: 0.8,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-        >
-          <Card className={`h-full transition-all duration-300 ${
-            [0, 7, 8, 10, 11].includes(selectedElement) ? 'ring-2 ring-blue-200 bg-blue-50/50' : ''
-          }`}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-blue-500" />
-                Summary of customer quotes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: "75%" }}
-                  transition={{ duration: 1, delay: 3 }}
-                  className="h-3 bg-green-400 rounded-full"
-                />
-                <div className="h-3 bg-gray-200 rounded-full w-full" />
-                <div className="h-3 bg-gray-200 rounded-full w-1/2" />
+          {/* Customers with most feedback */}
+          <div className="bg-white rounded-2xl p-6 relative group">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Customers with most feedback</h3>
+            </div>
+            {/* Tooltip */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
+              Demo
+            </div>
+
+            <div className="flex items-end justify-center gap-3 h-40">
+              {/* Bar chart with varying heights */}
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-300 rounded-t" style={{ height: "60px" }}></div>
+                <div className="w-12 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    </section>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-400 rounded-t" style={{ height: "40px" }}></div>
+                <div className="w-10 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-400 rounded-t" style={{ height: "100px" }}></div>
+                <div className="w-14 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-300 rounded-t" style={{ height: "70px" }}></div>
+                <div className="w-12 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-200 rounded-t" style={{ height: "50px" }}></div>
+                <div className="w-16 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-200 rounded-t" style={{ height: "30px" }}></div>
+                <div className="w-10 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-8 bg-pink-400 rounded-t" style={{ height: "80px" }}></div>
+                <div className="w-12 h-3 bg-gray-200 rounded mt-2 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary of customer quotes */}
+          <div className="bg-white rounded-2xl p-6 relative group">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Summary of customer quotes</h3>
+            </div>
+            {/* Tooltip */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-20">
+              Demo
+            </div>
+
+            <div className="space-y-4 shadow-sm p-4">
+              {/* Green pill at top */}
+              <div className="w-32 h-6 bg-green-400 rounded-full"></div>
+
+              {/* Skeleton lines */}
+              <div className="w-full h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-4/5 h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-full h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-3/4 h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-full h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-5/6 h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-2/3 h-3 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+
+      </section>
+      <Button>
+        Book Demo
+      </Button>
+    </div>
   )
 }
