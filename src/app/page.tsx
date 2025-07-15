@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from "react"
 import { Header } from "@/components/header"
 // import { HeroSection } from "@/components/hero-section"
 import { DashboardSection } from "@/components/dashboard-section"
-import { HeroSectionDemo } from "@/components/hero-demo"
+import { HeroSection } from "@/components/hero-section"
 import { InfiniteBrand } from "@/components/infinity-brand"
 import { SingleTestimonial } from "@/components/single-testimonial"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function CycleApp() {
   const [isAnimating, setIsAnimating] = useState(false)
@@ -15,9 +16,16 @@ export default function CycleApp() {
   const [animationCompleted, setAnimationCompleted] = useState(false)
   const sectionTwoRef = useRef<HTMLDivElement>(null)
   const heroRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
   const handleSuckAnimation = async () => {
-    // Start the animation sequence
+    // Only run complex animations on desktop
+    if (isMobile) {
+      // On mobile, do nothing - no loading screen or section transitions
+      return
+    }
+
+    // Desktop behavior: Start the animation sequence
     setIsAnimating(true)
     setAnimationCompleted(false)
 
@@ -51,19 +59,22 @@ export default function CycleApp() {
     const handleScroll = () => {
       const scrollY = window.scrollY
 
-      // If user scrolls back up to the top, reset everything for the next cycle
-      // Only reset if we're not currently animating to avoid conflicts
-      if (scrollY < 100 && (showSectionTwo || animationCompleted) && !isAnimating && !showLoadingScreen) {
-        console.log("User scrolled back to top - resetting for next cycle")
-        setShowSectionTwo(false)
-        setAnimationCompleted(false)
-        setShowLoadingScreen(false)
+      // Only handle scroll reset on desktop
+      if (!isMobile) {
+        // If user scrolls back up to the top, reset everything for the next cycle
+        // Only reset if we're not currently animating to avoid conflicts
+        if (scrollY < 100 && (showSectionTwo || animationCompleted) && !isAnimating && !showLoadingScreen) {
+          console.log("User scrolled back to top - resetting for next cycle")
+          setShowSectionTwo(false)
+          setAnimationCompleted(false)
+          setShowLoadingScreen(false)
+        }
       }
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [showSectionTwo, animationCompleted, showLoadingScreen, isAnimating])
+  }, [showSectionTwo, animationCompleted, showLoadingScreen, isAnimating, isMobile])
 
   return (
     <div className="bg-white relative">
@@ -71,7 +82,7 @@ export default function CycleApp() {
 
       {/* Fixed Hero Section - Always visible */}
       <div ref={heroRef} className="relative">
-        <HeroSectionDemo
+        <HeroSection
           isAnimating={isAnimating}
           isLoading={showLoadingScreen}
           onSuckAnimation={handleSuckAnimation}
@@ -83,11 +94,11 @@ export default function CycleApp() {
 
       {/* Content container for all sections after hero - Always present for scrolling */}
       <div className={`relative bg-white transition-all duration-500 ${
-        showSectionTwo ? 'z-30 opacity-100' : 'z-0 opacity-0'
+        isMobile || showSectionTwo ? 'z-30 opacity-100' : 'z-0 opacity-0'
       }`}>
         {/* Second Section - Always in DOM but hidden until animation completes */}
         <div ref={sectionTwoRef} className="relative bg-white">
-          <DashboardSection isVisible={showSectionTwo} />
+          <DashboardSection isVisible={isMobile || showSectionTwo} />
         </div>
 
         {/* Third Section - Always in DOM but hidden until animation completes */}

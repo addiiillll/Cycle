@@ -4,36 +4,114 @@ import { useState, useEffect, useRef } from "react"
 import { motion, useAnimation, useScroll, useTransform } from "framer-motion"
 import { FolderOpen, BarChart3, Zap, FileText, Star } from "lucide-react"
 import AnimatedGlassBall from "./animated-ball"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface HeroSectionProps {
   isAnimating: boolean
+  isLoading: boolean
   onSuckAnimation: () => void
 }
 
-export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionProps) {
+export function HeroSection({ isAnimating, isLoading, onSuckAnimation }: HeroSectionProps) {
   const heroRef = useRef<HTMLElement>(null)
   const [scrollTriggered, setScrollTriggered] = useState(false)
   const [iconsAttracted, setIconsAttracted] = useState(false)
+  const [scrollSuckProgress, setScrollSuckProgress] = useState(0)
+  const [manualTrigger, setManualTrigger] = useState(false) // Track manual triggers (drag/click)
+  const [animationCompleted, setAnimationCompleted] = useState(false) // Track if any animation has completed
+  const [windowHeight, setWindowHeight] = useState(800) // Default fallback
+  const [windowWidth, setWindowWidth] = useState(1400) // Default fallback
+  const [mobileElementSucked, setMobileElementSucked] = useState(false) // Track mobile element sucking
+
   const ballControls = useAnimation()
+  const isMobile = useIsMobile()
 
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  })
+  // Set window dimensions on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setWindowHeight(window.innerHeight)
+      setWindowWidth(window.innerWidth)
 
-  const scrollProgress = useTransform(scrollYProgress, [0, 0.5], [0, 1])
+      const handleResize = () => {
+        setWindowHeight(window.innerHeight)
+        setWindowWidth(window.innerWidth)
+      }
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
-  // Monitor scroll for animation trigger
+  // Use window scroll instead of section scroll since hero is fixed
+  const { scrollY } = useScroll()
+  // Adjust the scroll range to trigger at 70% of viewport height
+  const scrollProgress = useTransform(scrollY, [0, windowHeight * 0.7], [0, 1])
+
+
+
+  // Monitor scroll for gradual sucking animation
   useEffect(() => {
     const unsubscribe = scrollProgress.on("change", (latest) => {
-      if (latest >= 0.3 && !scrollTriggered && !isAnimating) {
-        setScrollTriggered(true)
-        triggerSuckAnimation()
+      const clampedValue = Math.min(Math.max(latest, 0), 1)
+
+      if (isMobile) {
+        // Mobile behavior: Simple single element animation without blocking
+        if (!mobileElementSucked && clampedValue >= 0.3) {
+          setMobileElementSucked(true)
+          // No loading screen or section transition on mobile
+        }
+
+        // Allow reset when scrolling back up on mobile
+        if (clampedValue < 0.05 && mobileElementSucked) {
+          setMobileElementSucked(false)
+        }
+      } else {
+        // Desktop behavior: Complex animations with loading and section transitions
+        // Only update scroll progress if no animation has been triggered yet
+        if (!manualTrigger && !scrollTriggered && !iconsAttracted && !animationCompleted) {
+          setScrollSuckProgress(clampedValue)
+        }
+
+        // Only handle scroll-based triggers if not manually triggered and not currently animating
+        if (!manualTrigger && !isAnimating && !isLoading && !scrollTriggered && !animationCompleted) {
+          // Trigger full suck animation when scroll reaches 95% (mapped to 1.0 in our transform)
+          if (clampedValue >= 0.95) {
+            console.log('Triggering suck animation from scroll at progress:', clampedValue)
+            setScrollTriggered(true)
+            setAnimationCompleted(true)
+            // Set manual trigger to prevent conflicts and trigger the full animation sequence
+            setManualTrigger(true)
+            triggerSuckAnimation()
+          }
+        }
+
+        // Allow reset when scrolling back up, but only if not currently animating or loading
+        if (clampedValue < 0.05 && (scrollTriggered || iconsAttracted || manualTrigger || animationCompleted) && !isAnimating && !isLoading) {
+          console.log('Resetting animation state - scroll back up to:', clampedValue)
+          resetAnimationState()
+        }
       }
     })
 
     return () => unsubscribe()
-  }, [scrollProgress, scrollTriggered, isAnimating])
+  }, [scrollProgress, scrollTriggered, isAnimating, manualTrigger, iconsAttracted, animationCompleted, isMobile, mobileElementSucked])
+
+  // Reset all animation states and positions
+  const resetAnimationState = () => {
+    console.log('Resetting all animation states to original')
+
+    // Reset all state variables to initial values
+    setScrollTriggered(false)
+    setIconsAttracted(false)
+    setManualTrigger(false)
+    setAnimationCompleted(false)
+    setMobileElementSucked(false)
+
+    // Important: Set scroll progress to 0 to prevent any partial animations
+    setScrollSuckProgress(0)
+
+    // Reset ball animation if needed
+    ballControls.set({ scale: 1 })
+  }
 
   const triggerSuckAnimation = async () => {
     await ballControls.start({
@@ -42,85 +120,197 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
     })
 
     setIconsAttracted(true)
-    onSuckAnimation()
+    // Call the parent callback to handle loading state and section transition
+    // Only trigger complex animations on desktop
+    if (!isMobile) {
+      onSuckAnimation()
+    }
   }
 
-  const centerX = typeof window !== "undefined" ? window.innerWidth / 2 : 700
-  const centerY = typeof window !== "undefined" ? window.innerHeight / 2 : 400
-
-  const handleIconDrag = (_: any, info: any) => {
-    const distance = Math.sqrt((info.point.x - centerX) ** 2 + (info.point.y - centerY) ** 2)
-    if (distance < 100 && !isAnimating) {
+  const triggerManualSuck = () => {
+    console.log('Manual suck triggered')
+    if (isMobile) {
+      // On mobile, just set the mobile element sucked state
+      setMobileElementSucked(true)
+    } else {
+      // On desktop, trigger full animation sequence
+      setManualTrigger(true)
+      setAnimationCompleted(true)
+      setScrollSuckProgress(0) // Reset scroll progress
       triggerSuckAnimation()
+    }
+  }
+
+  // Calculate center coordinates from window dimensions
+  const centerX = windowWidth / 2
+  const centerY = windowHeight / 2
+
+  // Create drag handlers for each element
+  const createDragHandlers = (elementId: string) => {
+    if (isMobile) {
+      // No drag handlers on mobile
+      return {}
+    }
+
+    return {
+      onDragStart: () => {
+        console.log(`Started dragging element: ${elementId}`)
+      },
+
+      onDrag: (_: any, info: any) => {
+        // Check if we're close enough to the ball for visual feedback
+        const distance = Math.sqrt((info.point.x - centerX) ** 2 + (info.point.y - centerY) ** 2)
+        if (distance < 100 && !isAnimating && !manualTrigger && !isLoading) {
+          // Visual feedback could be added here if desired
+        }
+      },
+
+      onDragEnd: (_: any, info: any) => {
+        const distance = Math.sqrt((info.point.x - centerX) ** 2 + (info.point.y - centerY) ** 2)
+
+        if (distance < 100 && !isAnimating && !manualTrigger && !isLoading) {
+          // Close enough to the ball - trigger suck animation
+          triggerManualSuck()
+        }
+        // If not close enough, the element will snap back due to dragMomentum={false}
+        // and the animate prop will handle the return to original position
+      }
+    }
+  }
+
+  // Helper function to calculate animation for mobile (single element)
+  const getMobileAnimation = (elementId: string, targetX: number, targetY: number) => {
+    // Only animate the first element on mobile
+    if (elementId === "black-n-left-upper" && mobileElementSucked) {
+      return {
+        x: targetX,
+        y: targetY,
+        scale: 0.2,
+        opacity: 0,
+      }
+    }
+
+    // All other elements stay in place on mobile
+    return {
+      x: 0,
+      y: 0,
+      scale: 1,
+      opacity: 1,
+    }
+  }
+
+  // Helper function to calculate gradual movement towards center based on scroll
+  const getScrollBasedAnimation = (elementId: string, targetX: number, targetY: number) => {
+    if (isMobile) {
+      return getMobileAnimation(elementId, targetX, targetY)
+    }
+
+    if (iconsAttracted) {
+      // Full attraction animation (when dragged, clicked, or scroll completed)
+      return {
+        x: targetX,
+        y: targetY,
+        scale: 0.2,
+        opacity: 0,
+      }
+    } else if (scrollSuckProgress > 0.05 && scrollSuckProgress < 0.95 && !animationCompleted) {
+      // Only apply gradual movement if no animation has been completed yet
+      // This prevents the dancing effect when scrolling back up after animation
+      const progressX = targetX * scrollSuckProgress
+      const progressY = targetY * scrollSuckProgress
+      const progressScale = 1 - (0.4 * scrollSuckProgress) // Scale from 1 to 0.6
+      const progressOpacity = 1 - (0.2 * scrollSuckProgress) // Opacity from 1 to 0.8
+
+      return {
+        x: progressX,
+        y: progressY,
+        scale: progressScale,
+        opacity: progressOpacity,
+      }
+    } else {
+      // Default state - clean original position
+      return {
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: 1,
+      }
     }
   }
 
 
 
   return (
-    <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section ref={heroRef} className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden z-20">
       <div className="text-center max-w-4xl mx-auto px-6 z-50 relative">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-2xl mx-auto text-7xl font-semibold text-gray-900/95 mb-6 tracking-tighter relative z-50"
+        <h1
+          className="max-w-2xl mx-auto text-4xl md:text-6xl lg:text-7xl font-semibold text-gray-900/95 mb-6 tracking-tighter relative z-50"
         >
           Your feedback hub, on autopilot
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
+        <p
           className="text-lg/6 text-slate-500 mb-8 max-w-2xl mx-auto relative z-50"
         >
           Cycle is the fastest way for your team to capture product feedback and share customer insights – without the
           busywork.
-        </motion.p>
+        </p>
 
         <div className="relative z-50">
-          <motion.div
-            onClick={() => !isAnimating && triggerSuckAnimation()}
+          <div
+            onClick={() => !isAnimating && !manualTrigger && triggerManualSuck()}
             className="cursor-pointer"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
+            
           >
-            <AnimatedGlassBall />
-          </motion.div>
+            <AnimatedGlassBall isLoading={isLoading} />
+          </div>
         </div>
       </div>
 
       {/* Top left - Blue folder */}
       <motion.div
-        className="absolute top-24 left-16 w-12 h-12 bg-blue-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`absolute top-24 left-16 group w-12 h-12 bg-blue-500 rounded-xl shadow-lg flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0}
+        dragTransition={{
+          bounceStiffness: 600,
+          bounceDamping: 20,
+          power: 0
+        }}
+        {...createDragHandlers("blue-folder-top-left")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 64 - 24,
-                y: centerY - 96 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("blue-folder-top-left", centerX - 64 - 24, centerY - 96 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("blue-folder-top-left", centerX - 64 - 24, centerY - 96 - 24)
             : {
-                y: -5,
-              }
+              x: 0,
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -128,38 +318,64 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
               }
         }
       >
+        {/* Drag me badge - appears on hover */}
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-300/50 text-black text-xs px-2 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 border border-blue-400">
+          Drag me
+        </div>
+
+        {/* Preview image with dotted border - appears on hover */}
+        <div className="absolute -bottom-36 -left-16 w-48 h-32 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg border-2 border-dashed border-blue-400 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-lg">
+          <div className="w-full h-full bg-white rounded border flex items-center justify-center">
+            <div className="text-center">
+              <FolderOpen className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600">File Management</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Original icon */}
         <FolderOpen className="w-5 h-5" />
       </motion.div>
 
       {/* Top right - Red chart */}
       <motion.div
-        className="absolute top-24 right-16 w-12 h-12 bg-red-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`absolute top-24 right-16 group w-12 h-12 bg-red-500 rounded-xl shadow-lg flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("red-chart-top-right")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - (typeof window !== "undefined" ? window.innerWidth - 112 : 1200) - 24,
-                y: centerY - 96 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("red-chart-top-right", centerX - (windowWidth - 112) - 24, centerY - 96 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("red-chart-top-right", centerX - (windowWidth - 112) - 24, centerY - 96 - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -168,38 +384,63 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
               }
         }
       >
+        {/* Drag me badge - appears on hover */}
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-300/50 text-black text-xs px-2 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 border border-blue-400">
+          Drag me
+        </div>
+        {/* Preview image with dotted border - appears on hover */}
+        <div className="absolute -bottom-36 -right-16 w-48 h-32 bg-gradient-to-br from-red-100 to-red-200 rounded-lg border-2 border-dashed border-red-400 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-lg">
+          <div className="w-full h-full bg-white rounded border flex items-center justify-center">
+            <div className="text-center">
+              <BarChart3 className="w-8 h-8 text-red-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600">Analytics Dashboard</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Original icon */}
         <BarChart3 className="w-5 h-5" />
       </motion.div>
 
       {/* Left side upper - Black N logo */}
       <motion.div
-        className="absolute top-60 left-52 w-12 h-12 bg-gray-800 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`absolute top-96 md:top-60 left-52 w-12 h-12 bg-gray-800 rounded-xl shadow-lg flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("black-n-left-upper")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 208 - 24,
-                y: centerY - 240 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("black-n-left-upper", centerX - 208 - 24, centerY - 240 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("black-n-left-upper", centerX - 208 - 24, centerY - 240 - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -213,33 +454,43 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
 
       {/* Right side upper - Purple star */}
       <motion.div
-        className="absolute top-60 right-52 w-12 h-12 bg-purple-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`hidden absolute top-60 right-52 group w-12 h-12 bg-purple-500 rounded-xl shadow-lg md:flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("purple-star-right-upper")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - (typeof window !== "undefined" ? window.innerWidth - 256 : 1000) - 24,
-                y: centerY - 240 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("purple-star-right-upper", centerX - (windowWidth - 256) - 24, centerY - 240 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("purple-star-right-upper", centerX - (windowWidth - 256) - 24, centerY - 240 - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -248,38 +499,64 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
               }
         }
       >
+        {/* Drag me badge - appears on hover */}
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-300/50 text-black text-xs px-2 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 border border-blue-400">
+          Drag me
+        </div>
+
+        {/* Preview image with dotted border - appears on hover */}
+        <div className="absolute -bottom-36 -right-16 w-48 h-32 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg border-2 border-dashed border-purple-400 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-lg">
+          <div className="w-full h-full bg-white rounded border flex items-center justify-center">
+            <div className="text-center">
+              <Star className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600">Favorites & Reviews</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Original icon */}
         <Star className="w-5 h-5" />
       </motion.div>
 
       {/* Left side middle - Orange zap */}
       <motion.div
-        className="absolute top-96 left-16 w-12 h-12 bg-orange-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`hidden absolute top-96 left-16 w-12 h-12 bg-orange-500 rounded-xl shadow-lg md:flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("orange-zap-left-middle")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 64 - 24,
-                y: centerY - 384 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("orange-zap-left-middle", centerX - 64 - 24, centerY - 384 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("orange-zap-left-middle", centerX - 64 - 24, centerY - 384 - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -288,38 +565,64 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
               }
         }
       >
+        {/* Drag me badge - appears on hover */}
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-300/50 text-black text-xs px-2 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 border border-blue-400">
+          Drag me
+        </div>
+
+        {/* Preview image with dotted border - appears on hover */}
+        <div className="absolute -top-32 -left-16 w-48 h-32 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg border-2 border-dashed border-orange-400 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-lg">
+          <div className="w-full h-full bg-white rounded border flex items-center justify-center">
+            <div className="text-center">
+              <Zap className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600">Quick Actions</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Original icon */}
         <Zap className="w-5 h-5" />
       </motion.div>
 
       {/* Right side middle - Blue star */}
       <motion.div
-        className="absolute top-96 right-16 w-12 h-12 bg-blue-400 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        className={`hidden absolute top-96 right-16 w-12 h-12 bg-blue-400 rounded-xl shadow-lg md:flex items-center justify-center text-white ${
+          isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        drag={!isMobile && !isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
-        whileHover={{ scale: 1.1 }}
-        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("blue-star-right-middle")}
+        whileHover={!isMobile ? { scale: 1.1 } : {}}
+        whileDrag={!isMobile ? { scale: 1.2, zIndex: 1000 } : {}}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - (typeof window !== "undefined" ? window.innerWidth - 112 : 1200) - 24,
-                y: centerY - 384 - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          isMobile
+            ? getMobileAnimation("blue-star-right-middle", centerX - (windowWidth - 112) - 24, centerY - 384 - 24)
+            : iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("blue-star-right-middle", centerX - (windowWidth - 112) - 24, centerY - 384 - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -334,32 +637,38 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
       {/* Bottom left - Blue folder */}
       <motion.div
         className="absolute bottom-32 left-52 w-12 h-12 bg-blue-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        drag={!isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("blue-folder-bottom-left")}
         whileHover={{ scale: 1.1 }}
         whileDrag={{ scale: 1.2, zIndex: 1000 }}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 208 - 24,
-                y: centerY - (typeof window !== "undefined" ? window.innerHeight - 176 : 600) - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("blue-folder-bottom-left", centerX - 208 - 24, centerY - (windowHeight - 176) - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -374,32 +683,38 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
       {/* Bottom center left - Colorful Google element */}
       <motion.div
         className="absolute bottom-32 right-52 w-12 h-12 bg-white border-2 border-gray-200 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
-        drag={!isAnimating && !iconsAttracted}
+        drag={!isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("google-bottom-right")}
         whileHover={{ scale: 1.1 }}
         whileDrag={{ scale: 1.2, zIndex: 1000 }}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - (typeof window !== "undefined" ? window.innerWidth - 256 : 1000) - 24,
-                y: centerY - (typeof window !== "undefined" ? window.innerHeight - 176 : 600) - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("google-bottom-right", centerX - (windowWidth - 256) - 24, centerY - (windowHeight - 176) - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -416,32 +731,38 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
       {/* Bottom center - Audio wave */}
       <motion.div
         className="absolute bottom-8 left-[80vh] w-12 h-12 bg-gray-100 border border-gray-300 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
-        drag={!isAnimating && !iconsAttracted}
+        drag={!isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("audio-wave-bottom-center")}
         whileHover={{ scale: 1.1 }}
         whileDrag={{ scale: 1.2, zIndex: 1000 }}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 500 - 24,
-                y: centerY - (typeof window !== "undefined" ? window.innerHeight - 80 : 700) - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("audio-wave-bottom-center", centerX - 500 - 24, centerY - (windowHeight - 80) - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
@@ -461,32 +782,38 @@ export function HeroSectionDemo({ isAnimating, onSuckAnimation }: HeroSectionPro
       {/* Bottom right - Blue document */}
       <motion.div
         className="absolute bottom-8 right-[80vh] w-12 h-12 bg-blue-500 rounded-xl shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing text-white"
-        drag={!isAnimating && !iconsAttracted}
+        drag={!isAnimating && !iconsAttracted && !animationCompleted}
         dragMomentum={false}
-        onDrag={handleIconDrag}
+        dragElastic={0.1}
+        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+        {...createDragHandlers("blue-document-bottom-right")}
         whileHover={{ scale: 1.1 }}
         whileDrag={{ scale: 1.2, zIndex: 1000 }}
         animate={
-          iconsAttracted
-            ? {
-                x: centerX - 800 - 24,
-                y: centerY - (typeof window !== "undefined" ? window.innerHeight - 80 : 700) - 24,
-                scale: 0.2,
-                opacity: 0,
-              }
+          iconsAttracted || (scrollSuckProgress > 0.05 && !animationCompleted)
+            ? getScrollBasedAnimation("blue-document-bottom-right", centerX - 800 - 24, centerY - (windowHeight - 80) - 24)
             : {
-                y: -5,
-              }
+              y: -5,
+              scale: 1,
+              opacity: 1,
+            }
         }
         transition={
           iconsAttracted
             ? {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 1.5,
+            }
+            : scrollSuckProgress > 0 && scrollSuckProgress < 1
+              ? {
                 type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 1.5,
+                stiffness: 200,
+                damping: 25,
+                duration: 0.3,
               }
-            : {
+              : {
                 duration: 2,
                 repeat: Infinity,
                 repeatType: "reverse",
