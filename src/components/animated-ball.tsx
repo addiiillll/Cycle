@@ -3,7 +3,11 @@ import { motion } from 'framer-motion';
 import { ShiningText } from './ui/shining-text';
 import { Card, CardContent } from './ui/card';
 
-const AnimatedGlassBall = () => {
+interface AnimatedGlassBallProps {
+  isLoading?: boolean;
+}
+
+const AnimatedGlassBall = ({ isLoading = false }: AnimatedGlassBallProps) => {
   return (
     // Outer Card - Creates the doubled card effect
     <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto aspect-[4/3] sm:aspect-[3/2] lg:aspect-[7/3]">
@@ -176,14 +180,25 @@ const AnimatedGlassBall = () => {
           />
         </div>
         
-        {/* Text */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-        >
-         <ShiningText text={"Drop anything to capture feedback"}/>
-        </motion.div>
+        {/* Text - Changes based on loading state */}
+        <div>
+          {isLoading ? (
+            <div className="space-y-2">
+              <div className="text-lg font-medium text-gray-700">Processing feedback...</div>
+              {/* Simple progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 overflow-hidden">
+                <motion.div
+                  className="bg-blue-500 h-1.5 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              </div>
+            </div>
+          ) : (
+            <ShiningText text={"Drop anything to capture feedback"}/>
+          )}
+        </div>
             </div>
           </CardContent>
         </Card>
